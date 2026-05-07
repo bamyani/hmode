@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hmode"
+version = "0.1.0"
+description = "A tiny CLI for switching AI model presets."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [{ name = "Hasib Bamyan" }]
+keywords = ["cli", "ai", "models", "productivity"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+]
+
+[project.scripts]
+hmode = "hmode.cli:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+packages = ["hmode"]
