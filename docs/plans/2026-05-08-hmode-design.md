@@ -1,12 +1,13 @@
 # hmode design
 
 ## Goal
-Build a small but credible Python CLI toolkit for managing AI workflow presets, templates, sessions, and timing notes.
+Build a small but credible Python CLI toolkit for managing AI workflow presets, templates, sessions, reminders, and timing notes.
 
 ## Scope
 - add and switch model presets
 - store reusable prompt templates
 - save lightweight session notes
+- store simple reminders
 - export and import config as JSON
 - plan usage-window primers for better reset timing
 - keep config locally in a single file
@@ -24,6 +25,7 @@ A config file at `~/.hmode.json` with:
 - `presets`: map of preset name to model string
 - `templates`: map of template name to template text
 - `sessions`: list of timestamped notes
+- `reminders`: list of simple reminder entries
 
 ## Commands
 - `hmode init`
@@ -34,6 +36,8 @@ A config file at `~/.hmode.json` with:
 - `hmode template add <name> <text>`
 - `hmode template list`
 - `hmode session <note>`
+- `hmode reminder add <when> <text>`
+- `hmode reminder list`
 - `hmode export`
 - `hmode import <path>`
 - `hmode primer --wake <time> --timezone <zone>`
@@ -46,4 +50,4 @@ A config file at `~/.hmode.json` with:
 
 ## Validation
 - unit test the CLI command functions with a temp config path
-- verify init/add/set/template/session/export/import/primer flows
+- verify init/add/set/template/session/reminder/export/import/primer flows

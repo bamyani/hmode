@@ -20,10 +20,11 @@ class Config:
     presets: dict[str, Preset]
     templates: dict[str, str]
     sessions: list[dict[str, str]]
+    reminders: list[dict[str, str]]
 
 
 def default_config() -> Config:
-    return Config(active=None, presets={}, templates={}, sessions=[])
+    return Config(active=None, presets={}, templates={}, sessions=[], reminders=[])
 
 
 def load_config(path: Path = CONFIG_PATH) -> Config:
@@ -54,11 +55,20 @@ def load_config(path: Path = CONFIG_PATH) -> Config:
         if time and note:
             sessions.append({"time": time, "note": note})
 
+    reminders: list[dict[str, str]] = []
+    for item in data.get("reminders", []):
+        if not isinstance(item, dict):
+            continue
+        when = str(item.get("when", "")).strip()
+        text = str(item.get("text", "")).strip()
+        if when and text:
+            reminders.append({"when": when, "text": text})
+
     active = data.get("active")
     if not isinstance(active, str) or active not in presets:
         active = None
 
-    return Config(active=active, presets=presets, templates=templates, sessions=sessions)
+    return Config(active=active, presets=presets, templates=templates, sessions=sessions, reminders=reminders)
 
 
 def save_config(config: Config, path: Path = CONFIG_PATH) -> None:
@@ -72,4 +82,5 @@ def serialize_config(config: Config) -> dict[str, Any]:
         "presets": {name: asdict(preset) for name, preset in config.presets.items()},
         "templates": config.templates,
         "sessions": config.sessions,
+        "reminders": config.reminders,
     }

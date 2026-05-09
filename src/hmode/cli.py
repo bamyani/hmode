@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from datetime import datetime
 from pathlib import Path
 
 from .config import CONFIG_PATH, Preset, default_config, load_config, save_config, serialize_config
@@ -37,6 +38,13 @@ def build_parser() -> argparse.ArgumentParser:
 
     session_parser = subparsers.add_parser("session", help="Track a session note")
     session_parser.add_argument("note", nargs="+")
+
+    reminder_parser = subparsers.add_parser("reminder", help="Track simple reminders")
+    reminder_sub = reminder_parser.add_subparsers(dest="reminder_command", required=True)
+    reminder_add = reminder_sub.add_parser("add", help="Add a reminder")
+    reminder_add.add_argument("when")
+    reminder_add.add_argument("text", nargs="+")
+    reminder_sub.add_parser("list", help="List reminders")
 
     subparsers.add_parser("export", help="Export config as JSON")
     imp_parser = subparsers.add_parser("import", help="Import config from JSON")
@@ -127,10 +135,28 @@ def cmd_template_list(path: Path = CONFIG_PATH) -> int:
 
 def cmd_session(note: str, path: Path = CONFIG_PATH) -> int:
     config = load_config(path)
-    timestamp = __import__("datetime").datetime.now().isoformat(timespec="seconds")
+    timestamp = datetime.now().isoformat(timespec="seconds")
     config.sessions.append({"time": timestamp, "note": note})
     save_config(config, path)
     print(f"Saved session note at {timestamp}")
+    return 0
+
+
+def cmd_reminder_add(when: str, text: str, path: Path = CONFIG_PATH) -> int:
+    config = load_config(path)
+    config.reminders.append({"when": when, "text": text})
+    save_config(config, path)
+    print(f"Saved reminder for {when}")
+    return 0
+
+
+def cmd_reminder_list(path: Path = CONFIG_PATH) -> int:
+    config = load_config(path)
+    if not config.reminders:
+        print("No reminders saved yet")
+        return 0
+    for reminder in config.reminders:
+        print(f"{reminder['when']}: {reminder['text']}")
     return 0
 
 
@@ -151,7 +177,8 @@ def cmd_import(source: Path, path: Path = CONFIG_PATH) -> int:
         return 1
 
     config = default_config()
-    config.active = data.get("active") if isinstance(data.get("active"), str) else None
+    active = data.get("active")
+    config.active = active if isinstance(active, str) else None
     config.presets = {}
     for name, value in data.get("presets", {}).items():
         model = ""
@@ -170,6 +197,14 @@ def cmd_import(source: Path, path: Path = CONFIG_PATH) -> int:
         note = str(item.get("note", "")).strip()
         if time and note:
             config.sessions.append({"time": time, "note": note})
+    config.reminders = []
+    for item in data.get("reminders", []):
+        if not isinstance(item, dict):
+            continue
+        when = str(item.get("when", "")).strip()
+        text = str(item.get("text", "")).strip()
+        if when and text:
+            config.reminders.append({"when": when, "text": text})
     if config.active not in config.presets:
         config.active = None
     save_config(config, path)
@@ -222,6 +257,11 @@ def main() -> int:
             return cmd_template_list(path)
     if args.command == "session":
         return cmd_session(" ".join(args.note).strip(), path)
+    if args.command == "reminder":
+        if args.reminder_command == "add":
+            return cmd_reminder_add(args.when, " ".join(args.text).strip(), path)
+        if args.reminder_command == "list":
+            return cmd_reminder_list(path)
     if args.command == "export":
         return cmd_export(path)
     if args.command == "import":

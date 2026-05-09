@@ -5,7 +5,7 @@ import json
 import tempfile
 import unittest
 
-from hmode.cli import cmd_add, cmd_export, cmd_import, cmd_init, cmd_list, cmd_primer, cmd_set, cmd_session, cmd_status, cmd_template_add
+from hmode.cli import cmd_add, cmd_export, cmd_import, cmd_init, cmd_list, cmd_primer, cmd_reminder_add, cmd_reminder_list, cmd_set, cmd_session, cmd_status, cmd_template_add
 
 
 class HModeTests(unittest.TestCase):
@@ -20,6 +20,7 @@ class HModeTests(unittest.TestCase):
             self.assertEqual(cmd_set("best", path), 0)
             self.assertEqual(cmd_template_add("review", "Give me a concise review.", path), 0)
             self.assertEqual(cmd_session("Swapped to best", path), 0)
+            self.assertEqual(cmd_reminder_add("2026-05-10 09:00", "Check usage window", path), 0)
 
             buf = StringIO()
             with redirect_stdout(buf):
@@ -36,9 +37,15 @@ class HModeTests(unittest.TestCase):
 
             buf = StringIO()
             with redirect_stdout(buf):
+                self.assertEqual(cmd_reminder_list(path), 0)
+            self.assertIn("Check usage window", buf.getvalue())
+
+            buf = StringIO()
+            with redirect_stdout(buf):
                 self.assertEqual(cmd_export(path), 0)
             data = json.loads(buf.getvalue())
             self.assertEqual(data["active"], "best")
+            self.assertEqual(len(data["reminders"]), 1)
 
             source.write_text(json.dumps(data))
             imported = Path(tmp) / "imported.json"
