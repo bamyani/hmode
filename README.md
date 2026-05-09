@@ -2,7 +2,7 @@
 
 `hmode` is a local AI workflow toolkit for people who switch models, prompts, and work modes a lot.
 
-It helps you keep things simple:
+It keeps the workflow in one place:
 - save model presets
 - store reusable prompt templates
 - note sessions and context
@@ -37,9 +37,19 @@ hmode list
 hmode status
 hmode template add review "Give me a concise review."
 hmode session "Swapped to best"
-hmode reminder add "tomorrow 09:00" "Check usage window"
+hmode reminder add tomorrow "Check usage window"
 hmode primer --wake 9am --timezone Pacific/Auckland
 ```
+
+## Demo flow
+A simple demo for the repo:
+1. Initialise the config
+2. Add two presets
+3. Save one template
+4. Record one session note
+5. Show a primer plan for tomorrow morning
+
+That makes the project feel real, useful, and immediately understandable.
 
 ## Config
 Your config lives at `~/.hmode.json`.
@@ -82,12 +92,8 @@ Example:
 ## Project status
 - working CLI
 - tests included
-- CI configured
 - ready for GitHub
-
-## License
-MIT
-ptional TUI later
+- clean open-source structure
 
 ## License
 MIT

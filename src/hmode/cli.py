@@ -9,9 +9,27 @@ from pathlib import Path
 from .config import CONFIG_PATH, Preset, default_config, load_config, save_config, serialize_config
 from .timing import build_primer_plan, format_primer_plan
 
+HELP_TEXT = """hmode is a local AI workflow toolkit.
+
+It keeps model presets, prompt templates, session notes, reminders, and primer timing in one place.
+"""
+
+HELP_EXAMPLES = """Examples:
+  hmode init
+  hmode add fast --model gpt-4.1-mini
+  hmode template add review "Give me a concise review."
+  hmode reminder add tomorrow "Check usage window"
+  hmode primer --wake 9am --timezone Pacific/Auckland
+"""
+
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="hmode", description="Local AI workflow toolkit.")
+    parser = argparse.ArgumentParser(
+        prog="hmode",
+        description=HELP_TEXT,
+        epilog=HELP_EXAMPLES,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     parser.add_argument("--config", type=Path, default=CONFIG_PATH, help="Path to the config file")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
