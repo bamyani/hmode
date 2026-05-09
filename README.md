@@ -6,7 +6,7 @@ It helps you keep things simple:
 - save model presets
 - store reusable prompt templates
 - note sessions and context
-- track usage timing reminders
+- plan usage-window primers
 - switch fast from the terminal
 
 ## Why it exists
@@ -16,7 +16,7 @@ If you keep bouncing between tools or model settings, this gives you one small p
 - model presets like `fast`, `balanced`, and `best`
 - prompt templates for repeat tasks
 - lightweight session notes
-- usage-window reminders
+- usage-window primer planning
 - import/export for your config
 - simple JSON config in your home directory
 
@@ -33,6 +33,9 @@ hmode add best --model claude-opus-4
 hmode set best
 hmode list
 hmode status
+hmode template add review "Give me a concise review."
+hmode session "Swapped to best"
+hmode primer --wake 9am --timezone Pacific/Auckland
 ```
 
 ## Config
@@ -51,15 +54,26 @@ Example:
       "name": "best",
       "model": "claude-opus-4"
     }
-  }
+  },
+  "templates": {
+    "review": "Give me a concise review."
+  },
+  "sessions": [
+    {
+      "time": "2026-05-09T08:00:00",
+      "note": "Swapped to best"
+    }
+  ]
 }
 ```
 
+## Primer planning
+`hmode primer` helps you line up an early-morning rolling-window starter so your resets happen during your workday. It doesn’t make extra usage available — it just shifts the timing.
+
 ## Roadmap
-- prompt template manager
-- session logging
-- reminder scheduler
-- export/import commands
+- richer template library
+- preset profiles for different providers
+- reminder export
 - optional TUI later
 
 ## License

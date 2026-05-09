@@ -26,28 +26,43 @@ def default_config() -> Config:
     return Config(active=None, presets={}, templates={}, sessions=[])
 
 
-def config_exists(path: Path = CONFIG_PATH) -> bool:
-    return path.exists()
-
-
 def load_config(path: Path = CONFIG_PATH) -> Config:
     if not path.exists():
         return default_config()
 
     data = json.loads(path.read_text())
-    presets = {
-        name: Preset(name=name, model=value["model"])
-        for name, value in data.get("presets", {}).items()
-    }
-    return Config(
-        active=data.get("active"),
-        presets=presets,
-        templates=data.get("templates", {}),
-        sessions=data.get("sessions", []),
-    )
+    presets: dict[str, Preset] = {}
+    for name, value in data.get("presets", {}).items():
+        model = ""
+        if isinstance(value, dict):
+            model = str(value.get("model", "")).strip()
+        else:
+            model = str(value).strip()
+        if model:
+            presets[str(name)] = Preset(name=str(name), model=model)
+
+    templates: dict[str, str] = {}
+    for name, value in data.get("templates", {}).items():
+        templates[str(name)] = str(value)
+
+    sessions: list[dict[str, str]] = []
+    for item in data.get("sessions", []):
+        if not isinstance(item, dict):
+            continue
+        time = str(item.get("time", "")).strip()
+        note = str(item.get("note", "")).strip()
+        if time and note:
+            sessions.append({"time": time, "note": note})
+
+    active = data.get("active")
+    if not isinstance(active, str) or active not in presets:
+        active = None
+
+    return Config(active=active, presets=presets, templates=templates, sessions=sessions)
 
 
 def save_config(config: Config, path: Path = CONFIG_PATH) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(serialize_config(config), indent=2) + "\n")
 
 

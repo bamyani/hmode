@@ -5,7 +5,7 @@ import json
 import tempfile
 import unittest
 
-from hmode.cli import cmd_add, cmd_export, cmd_import, cmd_init, cmd_list, cmd_set, cmd_session, cmd_status, cmd_template_add
+from hmode.cli import cmd_add, cmd_export, cmd_import, cmd_init, cmd_list, cmd_primer, cmd_set, cmd_session, cmd_status, cmd_template_add
 
 
 class HModeTests(unittest.TestCase):
@@ -47,6 +47,16 @@ class HModeTests(unittest.TestCase):
             with redirect_stdout(buf):
                 self.assertEqual(cmd_status(imported), 0)
             self.assertIn("best: claude-opus-4", buf.getvalue())
+
+    def test_primer(self):
+        buf = StringIO()
+        with redirect_stdout(buf):
+            self.assertEqual(cmd_primer("9am", "Pacific/Auckland", 2.5, 5.0, 3), 0)
+        out = buf.getvalue()
+        self.assertIn("Primer plan", out)
+        self.assertIn("Wake time", out)
+        self.assertIn("Primer time", out)
+        self.assertIn("Reset 1", out)
 
 
 if __name__ == "__main__":

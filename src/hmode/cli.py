@@ -3,14 +3,15 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from datetime import datetime
 from pathlib import Path
 
-from .config import CONFIG_PATH, Config, Preset, default_config, load_config, save_config
+from .config import CONFIG_PATH, Preset, default_config, load_config, save_config, serialize_config
+from .timing import build_primer_plan, format_primer_plan
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="hmode", description="Local AI workflow toolkit.")
+    parser.add_argument("--config", type=Path, default=CONFIG_PATH, help="Path to the config file")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     subparsers.add_parser("init", help="Create an empty config file")
@@ -31,15 +32,22 @@ def build_parser() -> argparse.ArgumentParser:
     tpl_sub = tpl_parser.add_subparsers(dest="template_command", required=True)
     tpl_add = tpl_sub.add_parser("add", help="Add a template")
     tpl_add.add_argument("name")
-    tpl_add.add_argument("text")
+    tpl_add.add_argument("text", nargs="+")
     tpl_sub.add_parser("list", help="List templates")
 
     session_parser = subparsers.add_parser("session", help="Track a session note")
-    session_parser.add_argument("note")
+    session_parser.add_argument("note", nargs="+")
 
     subparsers.add_parser("export", help="Export config as JSON")
     imp_parser = subparsers.add_parser("import", help="Import config from JSON")
-    imp_parser.add_argument("path")
+    imp_parser.add_argument("path", type=Path)
+
+    primer_parser = subparsers.add_parser("primer", help="Print a rolling-window primer schedule")
+    primer_parser.add_argument("--wake", default="09:00", help="Wake time, such as 09:00 or 9am")
+    primer_parser.add_argument("--timezone", default=None, help="Timezone name, such as Pacific/Auckland")
+    primer_parser.add_argument("--primer-offset", type=float, default=2.5, help="Hours before wake to start")
+    primer_parser.add_argument("--window-hours", type=float, default=5.0, help="Rolling window length")
+    primer_parser.add_argument("--resets", type=int, default=3, help="Number of reset times to show")
 
     return parser
 
@@ -83,7 +91,8 @@ def cmd_list(path: Path = CONFIG_PATH, show_templates: bool = False) -> int:
             marker = "*" if config.active == name else " "
             print(f"{marker} {name}: {preset.model}")
     if show_templates:
-        print()
+        if config.presets:
+            print()
         cmd_template_list(path)
     return 0
 
@@ -118,7 +127,7 @@ def cmd_template_list(path: Path = CONFIG_PATH) -> int:
 
 def cmd_session(note: str, path: Path = CONFIG_PATH) -> int:
     config = load_config(path)
-    timestamp = datetime.now().isoformat(timespec="seconds")
+    timestamp = __import__("datetime").datetime.now().isoformat(timespec="seconds")
     config.sessions.append({"time": timestamp, "note": note})
     save_config(config, path)
     print(f"Saved session note at {timestamp}")
@@ -127,50 +136,98 @@ def cmd_session(note: str, path: Path = CONFIG_PATH) -> int:
 
 def cmd_export(path: Path = CONFIG_PATH) -> int:
     config = load_config(path)
-    print(json.dumps({"active": config.active, "presets": {k: {"name": v.name, "model": v.model} for k, v in config.presets.items()}, "templates": config.templates, "sessions": config.sessions}, indent=2))
+    print(json.dumps(serialize_config(config), indent=2))
     return 0
 
 
 def cmd_import(source: Path, path: Path = CONFIG_PATH) -> int:
-    data = json.loads(source.read_text())
+    try:
+        data = json.loads(source.read_text())
+    except OSError as exc:
+        print(f"Could not read {source}: {exc}", file=sys.stderr)
+        return 1
+    except json.JSONDecodeError as exc:
+        print(f"Invalid JSON in {source}: {exc}", file=sys.stderr)
+        return 1
+
     config = default_config()
-    config.active = data.get("active")
-    config.presets = {
-        name: Preset(name=name, model=value["model"])
-        for name, value in data.get("presets", {}).items()
-    }
-    config.templates = data.get("templates", {})
-    config.sessions = data.get("sessions", [])
+    config.active = data.get("active") if isinstance(data.get("active"), str) else None
+    config.presets = {}
+    for name, value in data.get("presets", {}).items():
+        model = ""
+        if isinstance(value, dict):
+            model = str(value.get("model", "")).strip()
+        else:
+            model = str(value).strip()
+        if model:
+            config.presets[str(name)] = Preset(name=str(name), model=model)
+    config.templates = {str(name): str(value) for name, value in data.get("templates", {}).items()}
+    config.sessions = []
+    for item in data.get("sessions", []):
+        if not isinstance(item, dict):
+            continue
+        time = str(item.get("time", "")).strip()
+        note = str(item.get("note", "")).strip()
+        if time and note:
+            config.sessions.append({"time": time, "note": note})
+    if config.active not in config.presets:
+        config.active = None
     save_config(config, path)
     print(f"Imported config from {source}")
+    return 0
+
+
+def cmd_primer(
+    wake: str,
+    timezone_name: str | None,
+    primer_offset_hours: float,
+    window_hours: float,
+    resets: int,
+) -> int:
+    try:
+        plan = build_primer_plan(
+            wake=wake,
+            timezone_name=timezone_name,
+            primer_offset_hours=primer_offset_hours,
+            window_hours=window_hours,
+            resets=resets,
+        )
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+
+    print(format_primer_plan(plan))
     return 0
 
 
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
+    path = args.config
 
     if args.command == "init":
-        return cmd_init()
+        return cmd_init(path)
     if args.command == "add":
-        return cmd_add(args.name, args.model)
+        return cmd_add(args.name, args.model, path)
     if args.command == "set":
-        return cmd_set(args.name)
+        return cmd_set(args.name, path)
     if args.command == "list":
-        return cmd_list(show_templates=args.templates)
+        return cmd_list(path, show_templates=args.templates)
     if args.command == "status":
-        return cmd_status()
+        return cmd_status(path)
     if args.command == "template":
         if args.template_command == "add":
-            return cmd_template_add(args.name, args.text)
+            return cmd_template_add(args.name, " ".join(args.text).strip(), path)
         if args.template_command == "list":
-            return cmd_template_list()
+            return cmd_template_list(path)
     if args.command == "session":
-        return cmd_session(args.note)
+        return cmd_session(" ".join(args.note).strip(), path)
     if args.command == "export":
-        return cmd_export()
+        return cmd_export(path)
     if args.command == "import":
-        return cmd_import(Path(args.path))
+        return cmd_import(args.path, path)
+    if args.command == "primer":
+        return cmd_primer(args.wake, args.timezone, args.primer_offset, args.window_hours, args.resets)
     return 1
 
 

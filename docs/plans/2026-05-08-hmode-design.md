@@ -8,6 +8,7 @@ Build a small but credible Python CLI toolkit for managing AI workflow presets, 
 - store reusable prompt templates
 - save lightweight session notes
 - export and import config as JSON
+- plan usage-window primers for better reset timing
 - keep config locally in a single file
 
 ## Non-goals
@@ -35,6 +36,7 @@ A config file at `~/.hmode.json` with:
 - `hmode session <note>`
 - `hmode export`
 - `hmode import <path>`
+- `hmode primer --wake <time> --timezone <zone>`
 
 ## Implementation notes
 - use only the Python standard library
@@ -44,4 +46,4 @@ A config file at `~/.hmode.json` with:
 
 ## Validation
 - unit test the CLI command functions with a temp config path
-- verify init/add/set/template/session/export/import flows
+- verify init/add/set/template/session/export/import/primer flows
