@@ -18,10 +18,12 @@ class Preset:
 class Config:
     active: str | None
     presets: dict[str, Preset]
+    templates: dict[str, str]
+    sessions: list[dict[str, str]]
 
 
 def default_config() -> Config:
-    return Config(active=None, presets={})
+    return Config(active=None, presets={}, templates={}, sessions=[])
 
 
 def config_exists(path: Path = CONFIG_PATH) -> bool:
@@ -37,7 +39,12 @@ def load_config(path: Path = CONFIG_PATH) -> Config:
         name: Preset(name=name, model=value["model"])
         for name, value in data.get("presets", {}).items()
     }
-    return Config(active=data.get("active"), presets=presets)
+    return Config(
+        active=data.get("active"),
+        presets=presets,
+        templates=data.get("templates", {}),
+        sessions=data.get("sessions", []),
+    )
 
 
 def save_config(config: Config, path: Path = CONFIG_PATH) -> None:
@@ -48,4 +55,6 @@ def serialize_config(config: Config) -> dict[str, Any]:
     return {
         "active": config.active,
         "presets": {name: asdict(preset) for name, preset in config.presets.items()},
+        "templates": config.templates,
+        "sessions": config.sessions,
     }

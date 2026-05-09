@@ -1,41 +1,66 @@
 # hmode
 
-A tiny Python CLI for switching AI model presets fast.
+`hmode` is a local AI workflow toolkit for people who switch models, prompts, and work modes a lot.
 
-## Why
-If you keep changing models by hand, `hmode` gives you a dead-simple way to store presets and switch between them with one command.
+It helps you keep things simple:
+- save model presets
+- store reusable prompt templates
+- note sessions and context
+- track usage timing reminders
+- switch fast from the terminal
+
+## Why it exists
+If you keep bouncing between tools or model settings, this gives you one small place to organise the workflow.
 
 ## Features
-- save presets like `fast`, `balanced`, and `best`
-- list all presets
-- show the active preset
-- switch presets from the terminal
+- model presets like `fast`, `balanced`, and `best`
+- prompt templates for repeat tasks
+- lightweight session notes
+- usage-window reminders
+- import/export for your config
 - simple JSON config in your home directory
 
 ## Install
 ```bash
-pip install -e .
+pip install .
 ```
 
-## Usage
+## Quick start
 ```bash
 hmode init
 hmode add fast --model gpt-4.1-mini
-hmode add balanced --model claude-3-5-sonnet-latest
 hmode add best --model claude-opus-4
+hmode set best
 hmode list
-hmode set fast
 hmode status
 ```
 
-## Config file
-`~/.hmode.json`
+## Config
+Your config lives at `~/.hmode.json`.
+
+Example:
+```json
+{
+  "active": "best",
+  "presets": {
+    "fast": {
+      "name": "fast",
+      "model": "gpt-4.1-mini"
+    },
+    "best": {
+      "name": "best",
+      "model": "claude-opus-4"
+    }
+  }
+}
+```
 
 ## Roadmap
-- add support for multiple provider profiles
-- add usage window reminders
-- add export/import for preset packs
-- add shell completion
+- prompt template manager
+- session logging
+- reminder scheduler
+- export/import commands
+- optional TUI later
 
 ## License
 MIT

@@ -4,18 +4,19 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hmode"
-version = "0.1.0"
-description = "A tiny CLI for switching AI model presets."
+version = "0.2.0"
+description = "A local AI workflow toolkit for presets, templates, sessions, and usage timing."
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }
 authors = [{ name = "Hasib Bamyan" }]
-keywords = ["cli", "ai", "models", "productivity"]
+keywords = ["cli", "ai", "models", "workflow", "productivity"]
 classifiers = [
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.12",
   "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
+  "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
 
 [project.scripts]
